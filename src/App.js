@@ -25,64 +25,76 @@ export default class App extends Component {
     loading: false,
     query: '',
     page: 1,
-    largeImageUrl: [],
     modalContent:'',
       
   }
 
   pageIncrement = () => {
     this.setState({ page: this.state.page + 1 })
+    
   };
 
-  // updateContent = () => {
-  //   this.pageIncrement()
-  //   this.getImages(this.state.query, this.pageIncrement());
-  //   this.setState({ loading: true });
-  // }
   handleFormSubmit = query => {
-   
-    this.setState({ query, page: 1 , loading: true })
+    this.setState({ query: query, page: 1 , loading: true })
   };
   
   componentDidUpdate(prevProps, prevState) {
-    
     const { query: currentQuery, page: currentPage } = this.state;
     const { query: prevQuery, page: prevPage } = prevState;
 
-    if (currentQuery !== prevQuery || currentPage !== prevPage) {
-            
-      // this.setState({ loading: true })
-      this.setState({ loading: true })
+    if (prevQuery !== currentQuery) {
+      this.setState({ loading: true, images: [], page: 1 });
       API(currentQuery, currentPage).then(res => {
-        if (res.status === 200) {
-          const { hits } = res.data;
-          this.setState(
-            {
-              images: [...this.state.images, ...hits],
-              query: currentQuery,
-              largeImageUrl: res.data.hits.map(image => { return image.largeImageURL })
-            },
-            
-          )
-        //  console.log(res.data.hits.map(image =>{return image.webformatURL}))
-        };
-        scrollPageDown();
+        const { hits } = res.data;
+        this.setState({ images: [...this.state.images, ...hits] })
+      })
+    }
+
+    if (prevPage !== currentPage) {
+      API(prevQuery, currentPage).then(res => {
+        const { hits } = res.data;
+        this.setState(prevState => ({ images: [...prevState.images, ...hits] }))
     
-        if (this.state.images.length === 0) {
-          toast.warn('There are no images. Try another request, please', {
-            transition: Bounce
-          });
-        }
-                
-        if (res.status === 404) {
-          throw new Error(res.message || toast.error('Images are not exist', { transition: Flip }));
-        }
-                
-      }).finally(this.setState({ loading: false }))
-    };
+      })
+    }
   }
-  toggleModal = () => {
+    // if (currentQuery !== prevQuery || currentPage !== prevPage) {
+    //   API(currentQuery,currentPage ).then(images => {
+    //     this.setState({
+    //       images: [...prevState.images, ...images.data.hits],
+    //       loading: true
+    //     })
+    // })
+    // };
+  // }
+
+  // getImages = () => {
+  //  const { query, page } = this.state;
+  //    API(query, page).then(res => {
+  //      if (res.status === 200) {
+  //        const { hits } = res.data;
+  //        this.setState({
+  //          images: [...this.state.images, ...hits]
+  //        }
+  //        )
+  //      }
+        
+  //       scrollPageDown();
     
+  //       if (this.state.images.length === 0) {
+  //         toast.warn('There are no images. Try another request, please', {
+  //           transition: Bounce
+  //         });
+  //       }
+                
+  //       if (res.status === 404) {
+  //         throw new Error(res.message || toast.error('Images are not exist', { transition: Flip }));
+  //       }
+                
+  //     }).finally(this.setState({ loading: false }))
+  // }
+
+  toggleModal = () => {
     this.setState(({ showModal }) => ({
       showModal: !showModal
     }))
@@ -96,13 +108,14 @@ export default class App extends Component {
   };
 
   
-  
-  
-  
-  componentDidMount(query, page ) {
-    this.setState({ query:'', page: 1 })
-  };
+  // componentDidMount(query, page ) {
+  //   this.setState({ query:'', page: 1 })
+  // };
+
+
   render() {
+    // const isNotLastPage = visibleImages.length / page === 12;
+    // const btnEnable = visibleImages.length > 0 && !isLoading && isNotLastPage;
     return (
       <>
         <Searchbar onSubmit={this.handleFormSubmit} />
