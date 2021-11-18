@@ -30,69 +30,45 @@ export default class App extends Component {
   }
 
   pageIncrement = () => {
-    this.setState({ page: this.state.page + 1 })
-    
+    this.setState({ page: this.state.page + 1})
   };
 
   handleFormSubmit = query => {
-    this.setState({ query: query, page: 1 , loading: true })
+    this.setState({ query: query, page: 1  })
   };
   
   componentDidUpdate(prevProps, prevState) {
+   
     const { query: currentQuery, page: currentPage } = this.state;
     const { query: prevQuery, page: prevPage } = prevState;
 
     if (prevQuery !== currentQuery) {
-      this.setState({ loading: true, images: [], page: 1 });
-      API(currentQuery, currentPage).then(res => {
-        const { hits } = res.data;
-        this.setState({ images: [...this.state.images, ...hits] })
-      })
+        this.setState({ loading: true })
+      this.setState({ page: 1 , images:[]});
+      API(currentQuery, currentPage).then(hits => {
+     
+          if (hits.length === 0 ) {
+           toast.warn('There are no images. Try another request, please', {
+             transition: Bounce
+           });
+        }
+        
+        this.setState({ images: [...hits] });
+        scrollPageDown();
+      }).finally(() => { return this.setState({ loading: false }) })
     }
 
     if (prevPage !== currentPage) {
-      API(prevQuery, currentPage).then(res => {
-        const { hits } = res.data;
-        this.setState(prevState => ({ images: [...prevState.images, ...hits] }))
-    
-      })
+        this.setState({ loading: true })
+      API(currentQuery, this.state.page).then(
+        hits => {
+          this.setState(prevState => ({ images: [...prevState.images, ...hits] }))
+          scrollPageDown();
+        }
+      ).finally(() => { return this.setState({ loading: false }) })
     }
   }
-    // if (currentQuery !== prevQuery || currentPage !== prevPage) {
-    //   API(currentQuery,currentPage ).then(images => {
-    //     this.setState({
-    //       images: [...prevState.images, ...images.data.hits],
-    //       loading: true
-    //     })
-    // })
-    // };
-  // }
 
-  // getImages = () => {
-  //  const { query, page } = this.state;
-  //    API(query, page).then(res => {
-  //      if (res.status === 200) {
-  //        const { hits } = res.data;
-  //        this.setState({
-  //          images: [...this.state.images, ...hits]
-  //        }
-  //        )
-  //      }
-        
-  //       scrollPageDown();
-    
-  //       if (this.state.images.length === 0) {
-  //         toast.warn('There are no images. Try another request, please', {
-  //           transition: Bounce
-  //         });
-  //       }
-                
-  //       if (res.status === 404) {
-  //         throw new Error(res.message || toast.error('Images are not exist', { transition: Flip }));
-  //       }
-                
-  //     }).finally(this.setState({ loading: false }))
-  // }
 
   toggleModal = () => {
     this.setState(({ showModal }) => ({
@@ -107,22 +83,19 @@ export default class App extends Component {
   
   };
 
-  
-  // componentDidMount(query, page ) {
-  //   this.setState({ query:'', page: 1 })
-  // };
-
 
   render() {
-    // const isNotLastPage = visibleImages.length / page === 12;
-    // const btnEnable = visibleImages.length > 0 && !isLoading && isNotLastPage;
+    const  { images, page, loading, showModal,modalContent } = this.state;
+    const isNotLastPage = images.length / page === 12;
+    const btnEnable = images.length > 0 && !loading && isNotLastPage;
+   
     return (
       <>
         <Searchbar onSubmit={this.handleFormSubmit} />
-        <ImageGallery data={this.state.images} getImageForModal={this.getImageForModal} openModal={ this.toggleModal}/>
-        {this.state.loading === true && <Spinner />}
-        {this.state.images.length !== 0 && <Button onClick={this.pageIncrement} />}
-        {this.state.showModal && <Modal onClose={this.toggleModal} largeImageUrl={this.state.modalContent} />}
+        {images.length !== 0  && <ImageGallery data={images} getImageForModal={this.getImageForModal} openModal={this.toggleModal} />}
+        {loading  && <Spinner />}
+        {showModal && <Modal onClose={this.toggleModal} largeImageUrl={modalContent} />}
+        {btnEnable  && <Button onClick={this.pageIncrement} />}
       </>
     )
            
