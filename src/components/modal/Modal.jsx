@@ -1,49 +1,35 @@
-import React, { Component } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect } from 'react';
 import s from '../modal/Modal.module.css';
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types';
 
-
-const modalRoot = document.querySelector('#modal-root')
-
-export default class Modal extends Component {
-    static propTypes = {
-        largeImageUrl: PropTypes.string.isRequired,
-        
+export default function Modal({ largeImageUrl, onClose }) {
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
     };
-    componentDidMount() {
-       
-        window.addEventListener('keydown', this.handleKeyDown)
-    }
-    handleKeyDown = (e) => {
-            if (e.code === 'Escape') {
-                this.props.onClose()
-            }
-            
-    }
-    handleBackdropClick = (e) => {
-            if (e.currentTarget === e.target) {
-                this.props.onClose()
-            }
-            
-    }
-    componentWillUnmount() {
-        window.removeEventListener('keydown', this.handleKeyDown)
-    }
+  }, []);
 
-    
-    //   toggleModal = ()=>{}
-    render(){
-        
-        return createPortal(
-        <div className={s.Overlay} onClick={this.handleBackdropClick} >
-            <div className={s.Modal}>
-                    <img src={this.props.largeImageUrl} alt="" />
-            </div>
-        </div>,
-        modalRoot
-        // <button>Modal</button>
-    )
-
+  const handleKeyDown = e => {
+    if (e.code === 'Escape') {
+      onClose();
     }
+  };
+  const handleBackdropClick = e => {
+    if (e.currentTarget === e.target) {
+      onClose();
+    }
+  };
+
+  return (
+    <div className={s.Overlay} onClick={handleBackdropClick}>
+      <div className={s.Modal}>
+        <img src={largeImageUrl} />
+      </div>
+    </div>
+  );
 }
+Modal.propTypes = {
+  onClose: PropTypes.func,
+  largeImageUrl: PropTypes.string.isRequired,
+};

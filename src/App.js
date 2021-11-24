@@ -1,15 +1,15 @@
-import React, { Component } from 'react';
-import { toast, Flip, Bounce } from 'react-toastify'
+import React, { useState, useEffect } from 'react';
+import { toast, Bounce } from 'react-toastify';
 
-import 'react-toastify/dist/ReactToastify.css'
-import Searchbar from 'components/searchbar/Searchbar'
-import ImageGallery from 'components/imageGallery/ImageGallery'
-import Button from 'components/button/Button'
-import Modal from 'components/modal/Modal'
-import Spinner from 'components/spinner/Spinner'
-import API from 'components/API/API'
+import 'react-toastify/dist/ReactToastify.css';
+import Searchbar from 'components/searchbar/Searchbar';
+import ImageGallery from 'components/imageGallery/ImageGallery';
+import Button from 'components/button/Button';
+import Modal from 'components/modal/Modal';
+import Spinner from 'components/spinner/Spinner';
+import API from 'components/API/API';
 
-toast.configure()
+toast.configure();
 
 function scrollPageDown() {
   window.scrollTo({
@@ -18,87 +18,85 @@ function scrollPageDown() {
   });
 }
 
-export default class App extends Component {
-  state = {
-    showModal: false,
-    images: [],
-    loading: false,
-    query: '',
-    page: 1,
-    modalContent:'',
-      
-  }
+export default function App() {
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [modalContent, setModalContent] = useState('');
 
-  pageIncrement = () => {
-    this.setState({ page: this.state.page + 1})
+  const handleFormSubmit = query => {
+    setPage(1);
+    setQuery(query);
   };
-
-  handleFormSubmit = query => {
-    this.setState({ query: query, page: 1  })
-  };
-  
-  componentDidUpdate(prevProps, prevState) {
-   
-    const { query: currentQuery, page: currentPage } = this.state;
-    const { query: prevQuery, page: prevPage } = prevState;
-
-    if (prevQuery !== currentQuery) {
-        this.setState({ loading: true })
-      this.setState({ page: 1 , images:[]});
-      API(currentQuery, currentPage).then(hits => {
-     
-          if (hits.length === 0 ) {
-           toast.warn('There are no images. Try another request, please', {
-             transition: Bounce
-           });
-        }
-        
-        this.setState({ images: [...hits] });
-        scrollPageDown();
-      }).finally(() => { return this.setState({ loading: false }) })
-    }
-
-    if (prevPage !== currentPage) {
-        this.setState({ loading: true })
-      API(currentQuery, this.state.page).then(
-        hits => {
-          this.setState(prevState => ({ images: [...prevState.images, ...hits] }))
+  useEffect(() => {
+    if (!query) return;
+    setLoading(true);
+    setPage(1);
+    setImages([]);
+    const getResults = () => {
+      API(query, page)
+        .then(hits => {
+          if (hits.length === 0) {
+            toast.warn('There are no images. Try another request, please', {
+              transition: Bounce,
+            });
+          }
+          setImages([...hits]);
           scrollPageDown();
-        }
-      ).finally(() => { return this.setState({ loading: false }) })
-    }
-  }
+        })
+        .finally(() => {
+          return setLoading(false);
+        });
+    };
+  }, [query]);
 
+  useEffect(() => {
+    setLoading(true);
+    API(query, page)
+      .then(hits => {
+        setImages(prevImages => {
+          return [...prevImages, ...hits];
+        });
+        scrollPageDown();
+      })
+      .finally(() => {
+        return setLoading(false);
+      });
+  }, [page]);
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal
-    }))
+  const toggleModal = () => {
+    setShowModal(!showModal);
   };
 
-  getImageForModal = (itemId) => {
-    const { images } = this.state;
+  const getImageForModal = itemId => {
     const element = images.find(({ id }) => id === itemId);
-    this.setState({ modalContent: element.largeImageURL });
-  
+    setModalContent(element.largeImageURL);
   };
-
-
-  render() {
-    const  { images, page, loading, showModal,modalContent } = this.state;
-    const isNotLastPage = images.length / page === 12;
-    const btnEnable = images.length > 0 && !loading && isNotLastPage;
-   
-    return (
-      <>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {images.length !== 0  && <ImageGallery data={images} getImageForModal={this.getImageForModal} openModal={this.toggleModal} />}
-        {loading  && <Spinner />}
-        {showModal && <Modal onClose={this.toggleModal} largeImageUrl={modalContent} />}
-        {btnEnable  && <Button onClick={this.pageIncrement} />}
-      </>
-    )
-           
+  const pageIncrement = () => {
+    setPage(prevPage => {
+      return prevPage + 1;
+    });
   };
+  const isNotLastPage = images.length / page === 12;
+  const btnEnable = images.length > 0 && !loading && isNotLastPage;
 
+  return (
+    <>
+      <Searchbar onSubmit={handleFormSubmit} />
+      {images.length !== 0 && (
+        <ImageGallery
+          data={images}
+          getImageForModal={getImageForModal}
+          openModal={toggleModal}
+        />
+      )}
+      {loading && <Spinner />}
+      {showModal && (
+        <Modal onClose={toggleModal} largeImageUrl={modalContent} />
+      )}
+      {btnEnable && <Button onClick={pageIncrement} />}
+    </>
+  );
 }
