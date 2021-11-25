@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { toast, Bounce } from 'react-toastify';
-
 import 'react-toastify/dist/ReactToastify.css';
 import Searchbar from 'components/searchbar/Searchbar';
 import ImageGallery from 'components/imageGallery/ImageGallery';
@@ -8,16 +7,13 @@ import Button from 'components/button/Button';
 import Modal from 'components/modal/Modal';
 import Spinner from 'components/spinner/Spinner';
 import API from 'components/API/API';
-
 toast.configure();
-
 function scrollPageDown() {
   window.scrollTo({
     top: document.documentElement.scrollHeight,
     behavior: 'smooth',
   });
 }
-
 export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,16 +21,14 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [modalContent, setModalContent] = useState('');
-
   const handleFormSubmit = query => {
-    setPage(1);
     setQuery(query);
+    setPage(1);
+    setImages([]);
   };
   useEffect(() => {
     if (!query) return;
     setLoading(true);
-    setPage(1);
-    setImages([]);
     const getResults = () => {
       API(query, page)
         .then(hits => {
@@ -43,33 +37,20 @@ export default function App() {
               transition: Bounce,
             });
           }
-          setImages([...hits]);
+          setImages(prevImages => {
+            return [...prevImages, ...hits];
+          });
           scrollPageDown();
         })
         .finally(() => {
           return setLoading(false);
         });
     };
-  }, [query]);
-
-  useEffect(() => {
-    setLoading(true);
-    API(query, page)
-      .then(hits => {
-        setImages(prevImages => {
-          return [...prevImages, ...hits];
-        });
-        scrollPageDown();
-      })
-      .finally(() => {
-        return setLoading(false);
-      });
-  }, [page]);
-
+    getResults();
+  }, [query, page]);
   const toggleModal = () => {
     setShowModal(!showModal);
   };
-
   const getImageForModal = itemId => {
     const element = images.find(({ id }) => id === itemId);
     setModalContent(element.largeImageURL);
@@ -81,7 +62,6 @@ export default function App() {
   };
   const isNotLastPage = images.length / page === 12;
   const btnEnable = images.length > 0 && !loading && isNotLastPage;
-
   return (
     <>
       <Searchbar onSubmit={handleFormSubmit} />
