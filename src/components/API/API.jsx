@@ -3,9 +3,7 @@ import { toast, Flip } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 const API_KEY = '23477819-44226e1e125dfcf9362a81201';
 const BASE_URL = 'https://pixabay.com/api/';
-
 toast.configure();
-
 export default function API(query, page) {
   return axios
     .get(
