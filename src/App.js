@@ -21,6 +21,7 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [modalContent, setModalContent] = useState('');
+  const [alt, setAlt] = useState('');
   const handleFormSubmit = query => {
     setQuery(query);
     setPage(1);
@@ -54,6 +55,7 @@ export default function App() {
   const getImageForModal = itemId => {
     const element = images.find(({ id }) => id === itemId);
     setModalContent(element.largeImageURL);
+    setAlt(element.tags);
   };
   const pageIncrement = () => {
     setPage(prevPage => {
@@ -74,7 +76,7 @@ export default function App() {
       )}
       {loading && <Spinner />}
       {showModal && (
-        <Modal onClose={toggleModal} largeImageUrl={modalContent} />
+        <Modal onClose={toggleModal} largeImageUrl={modalContent} alt={alt} />
       )}
       {btnEnable && <Button onClick={pageIncrement} />}
     </>
